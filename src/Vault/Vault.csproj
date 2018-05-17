@@ -20,7 +20,7 @@ Fork URL: https://github.com/amitisss/Vault.NET/tree/static-http-client-construc
     <PackageReference Include="System.Collections" Version="4.3.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="1.0.0" />
     <PackageReference Include="Microsoft.Extensions.Options" Version="1.0.0" />
-    <PackageReference Include="NewtonSoft.Json" Version="10.0.3" />
+    <PackageReference Include="NewtonSoft.Json" Version="9.0.1" />
   </ItemGroup>
 
 </Project>

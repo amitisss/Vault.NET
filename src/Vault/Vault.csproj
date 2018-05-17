@@ -11,7 +11,7 @@
     <PackageTags>vault;api;hashicorp</PackageTags>
     <Authors>Chatham Financial Corp.</Authors>
     <Description>This a Github fork of the .NET API for Vault (https://www.vaultproject.io/)
-Fork URL: https://github.com/amitisss/Vault.NET/tree/static-http-client-constructor</Description>
+Fork URL: https://github.com/amitisss/Vault.NET</Description>
     <Copyright>Copyright 2018 (c) Chatham Financial Corp. All rights reserved.</Copyright>
     <AssemblyName>Vault.Fork</AssemblyName>
   </PropertyGroup>

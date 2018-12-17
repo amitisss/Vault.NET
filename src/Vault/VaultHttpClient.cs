@@ -105,10 +105,12 @@ namespace Vault
                 if (r.StatusCode != HttpStatusCode.NotFound) {
                     if (!r.IsSuccessStatusCode)
                     {
-                        throw new VaultRequestException($"Unexpected response, status code {r.StatusCode}", r.StatusCode);
+                        throw new VaultRequestException($"Unexpected response, Status Code: {(int)r.StatusCode} {r.StatusCode}", r.StatusCode);
                     }
                     if (r.Content.Headers.ContentType.MediaType != "application/json") {
-                        throw new VaultRequestException($"Unexpected content media type {r.Content.Headers.ContentType.MediaType}", HttpStatusCode.InternalServerError);
+                        throw new VaultRequestException(
+                            $"Unexpected content media type {r.Content.Headers.ContentType.MediaType}, Status Code: {(int) r.StatusCode} {r.StatusCode}",
+                            HttpStatusCode.InternalServerError);
                     }
                 }
 
@@ -123,10 +125,12 @@ namespace Vault
                 if (r.StatusCode != HttpStatusCode.NotFound) {
                     if (!r.IsSuccessStatusCode)
                     {
-                        throw new VaultRequestException($"Unexpected response, status code {r.StatusCode}", r.StatusCode);
+                        throw new VaultRequestException($"Unexpected response, Status Code: {(int)r.StatusCode} {r.StatusCode}", r.StatusCode);
                     }
                     if (r.Content.Headers.ContentType.MediaType == "application/json") {
-                        throw new VaultRequestException($"Unexpected content media type {r.Content.Headers.ContentType.MediaType}", HttpStatusCode.InternalServerError);
+                        throw new VaultRequestException(
+                            $"Unexpected content media type {r.Content.Headers.ContentType.MediaType}, Status Code: {(int) r.StatusCode} {r.StatusCode}",
+                            HttpStatusCode.InternalServerError);
                     }
                 }
 

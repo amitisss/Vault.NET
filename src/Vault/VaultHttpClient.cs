@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -6,6 +7,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
+using Vault.Models;
 
 namespace Vault
 {
@@ -102,17 +104,7 @@ namespace Vault
         {
             using (var r = await HttpSendRequest(method, uri, body, vaultToken, wrapTtl, ct).ConfigureAwait(false))
             {
-                if (r.StatusCode != HttpStatusCode.NotFound) {
-                    if (!r.IsSuccessStatusCode)
-                    {
-                        throw new VaultRequestException($"Unexpected response, Status Code: {(int)r.StatusCode} {r.StatusCode}", r.StatusCode);
-                    }
-                    if (r.Content.Headers.ContentType.MediaType != "application/json") {
-                        throw new VaultRequestException(
-                            $"Unexpected content media type {r.Content.Headers.ContentType.MediaType}, Status Code: {(int) r.StatusCode} {r.StatusCode}",
-                            HttpStatusCode.InternalServerError);
-                    }
-                }
+                await ValidateVaultResponse(r).ConfigureAwait(false);
 
                 return await r.Content.ReadAsStringAsync().ConfigureAwait(false);
             }
@@ -122,17 +114,7 @@ namespace Vault
         {
             using (var r = await HttpSendRequest(method, uri, body, vaultToken, TimeSpan.Zero, ct).ConfigureAwait(false))
             {
-                if (r.StatusCode != HttpStatusCode.NotFound) {
-                    if (!r.IsSuccessStatusCode)
-                    {
-                        throw new VaultRequestException($"Unexpected response, Status Code: {(int)r.StatusCode} {r.StatusCode}", r.StatusCode);
-                    }
-                    if (r.Content.Headers.ContentType.MediaType == "application/json") {
-                        throw new VaultRequestException(
-                            $"Unexpected content media type {r.Content.Headers.ContentType.MediaType}, Status Code: {(int) r.StatusCode} {r.StatusCode}",
-                            HttpStatusCode.InternalServerError);
-                    }
-                }
+                await ValidateVaultResponse(r).ConfigureAwait(false);
 
                 return await r.Content.ReadAsByteArrayAsync().ConfigureAwait(false);
             }
@@ -154,6 +136,45 @@ namespace Vault
             {
                 DefaultValueHandling = DefaultValueHandling.Ignore
             };
+        }
+
+        private static async Task ValidateVaultResponse(HttpResponseMessage response)
+        {
+            var stringBuilder = new StringBuilder();
+
+            var invalid = false;
+
+            if (response.StatusCode != HttpStatusCode.NotFound)
+            {
+                if (!response.IsSuccessStatusCode)
+                {
+                    stringBuilder.Append(
+                        $"Unexpected response, Status Code: {(int) response.StatusCode} {response.StatusCode}");
+                    invalid = true;
+                }
+
+                else if (response.Content.Headers.ContentType.MediaType != "application/json")
+                {
+                    stringBuilder.Append(
+                        $"Unexpected content media type {response.Content.Headers.ContentType.MediaType}, Status Code: {(int) response.StatusCode} {response.StatusCode}");
+                    invalid = true;
+                }
+
+                if (invalid)
+                {
+                    var jsonContent = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                    var errors = JsonDeserialize<ListResponseErrors>(jsonContent);
+                    if (errors.Errors.Any())
+                    {
+                        stringBuilder.Append(", Errors:");
+                        foreach (var error in errors.Errors) stringBuilder.Append($" {error},");
+
+                        stringBuilder.Length--;
+                    }
+
+                    throw new VaultRequestException(stringBuilder.ToString(), response.StatusCode, errors);
+                }
+            }
         }
     }
 }

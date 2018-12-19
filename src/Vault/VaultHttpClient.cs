@@ -140,35 +140,24 @@ namespace Vault
 
         private static async Task ValidateVaultResponse(HttpResponseMessage response)
         {
-            var exceptionMessage = string.Empty;
-
-            var invalid = false;
-
             if (response.StatusCode != HttpStatusCode.NotFound)
             {
                 if (!response.IsSuccessStatusCode)
                 {
-                    exceptionMessage =
-                        $"Unexpected response, Status Code: {(int) response.StatusCode} {response.StatusCode}";
-                    invalid = true;
+                    var jsonContent = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+                    var exceptionMessage =
+                        $"Unexpected response, Status Code: {(int) response.StatusCode} {response.StatusCode}, {jsonContent}";
+                    throw new VaultRequestException(exceptionMessage, response.StatusCode);
                 }
 
-                else if (response.Content.Headers.ContentType.MediaType != "application/json")
-                {
-                    exceptionMessage =
-                        $"Unexpected content media type {response.Content.Headers.ContentType.MediaType}, Status Code: {(int) response.StatusCode} {response.StatusCode}";
-                    invalid = true;
-                }
-
-                if (invalid)
+                if (response.Content.Headers.ContentType.MediaType != "application/json")
                 {
                     var jsonContent = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-                    var errors = JsonDeserialize<ListResponseErrors>(jsonContent);
 
-                    exceptionMessage += ", Errors: ";
-                    exceptionMessage += string.Join(", ", errors.Errors);
-
-                    throw new VaultRequestException(exceptionMessage, response.StatusCode, errors);
+                    var exceptionMessage =
+                        $"Unexpected content media type {response.Content.Headers.ContentType.MediaType}, Status Code: {(int) response.StatusCode} {response.StatusCode}, {jsonContent}";
+                    throw new VaultRequestException(exceptionMessage, response.StatusCode);
                 }
             }
         }

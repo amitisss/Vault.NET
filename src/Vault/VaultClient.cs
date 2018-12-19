@@ -7,7 +7,6 @@ using Microsoft.Extensions.Options;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
-using Vault.Models;
 
 namespace Vault
 {
@@ -132,22 +131,8 @@ namespace Vault
     public class VaultRequestException : Exception
     {
         public HttpStatusCode StatusCode { get; set; }
-        public List<string> Errors { get; set; }
         public VaultRequestException() { }
-
-        public VaultRequestException(string message, HttpStatusCode statusCode, ListResponseErrors errors) :
-            base(message)
-        {
-            StatusCode = statusCode;
-            Errors = errors.Errors;
-        }
-
-        public VaultRequestException(string message, HttpStatusCode statusCode, Exception inner,
-            ListResponseErrors errors) :
-            base(message, inner)
-        {
-            StatusCode = statusCode;
-            Errors = errors.Errors;
-        }
+        public VaultRequestException(string message, HttpStatusCode statusCode) : base(message) { StatusCode = statusCode; }
+        public VaultRequestException(string message, HttpStatusCode statusCode, Exception inner) : base(message, inner) { StatusCode = statusCode; }
     }
 }

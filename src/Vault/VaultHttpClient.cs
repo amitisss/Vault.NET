@@ -146,6 +146,7 @@ namespace Vault
 
                     var exceptionMessage =
                         $"Unexpected response, Status Code: {(int) response.StatusCode} {response.StatusCode}, {jsonContent}";
+
                     throw new VaultRequestException(exceptionMessage, response.StatusCode);
                 }
 
@@ -155,6 +156,7 @@ namespace Vault
 
                     var exceptionMessage =
                         $"Unexpected content media type {response.Content.Headers.ContentType.MediaType}, Status Code: {(int) response.StatusCode} {response.StatusCode}, {jsonContent}";
+
                     throw new VaultRequestException(exceptionMessage, response.StatusCode);
                 }
             }

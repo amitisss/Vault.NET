@@ -140,7 +140,7 @@ namespace Vault
 
         private static async Task ValidateVaultResponse(HttpResponseMessage response)
         {
-            var stringBuilder = new StringBuilder();
+            var exceptionMessage = string.Empty;
 
             var invalid = false;
 
@@ -148,15 +148,15 @@ namespace Vault
             {
                 if (!response.IsSuccessStatusCode)
                 {
-                    stringBuilder.Append(
-                        $"Unexpected response, Status Code: {(int) response.StatusCode} {response.StatusCode}");
+                    exceptionMessage =
+                        $"Unexpected response, Status Code: {(int) response.StatusCode} {response.StatusCode}";
                     invalid = true;
                 }
 
                 else if (response.Content.Headers.ContentType.MediaType != "application/json")
                 {
-                    stringBuilder.Append(
-                        $"Unexpected content media type {response.Content.Headers.ContentType.MediaType}, Status Code: {(int) response.StatusCode} {response.StatusCode}");
+                    exceptionMessage =
+                        $"Unexpected content media type {response.Content.Headers.ContentType.MediaType}, Status Code: {(int) response.StatusCode} {response.StatusCode}";
                     invalid = true;
                 }
 
@@ -164,15 +164,11 @@ namespace Vault
                 {
                     var jsonContent = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
                     var errors = JsonDeserialize<ListResponseErrors>(jsonContent);
-                    if (errors.Errors.Any())
-                    {
-                        stringBuilder.Append(", Errors:");
-                        foreach (var error in errors.Errors) stringBuilder.Append($" {error},");
 
-                        stringBuilder.Length--;
-                    }
+                    exceptionMessage += ", Errors: ";
+                    exceptionMessage += string.Join(", ", errors.Errors);
 
-                    throw new VaultRequestException(stringBuilder.ToString(), response.StatusCode, errors);
+                    throw new VaultRequestException(exceptionMessage, response.StatusCode, errors);
                 }
             }
         }

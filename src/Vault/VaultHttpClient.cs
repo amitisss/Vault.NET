@@ -102,15 +102,7 @@ namespace Vault
         {
             using (var r = await HttpSendRequest(method, uri, body, vaultToken, wrapTtl, ct).ConfigureAwait(false))
             {
-                if (r.StatusCode != HttpStatusCode.NotFound) {
-                    if (!r.IsSuccessStatusCode)
-                    {
-                        throw new VaultRequestException($"Unexpected response, status code {r.StatusCode}", r.StatusCode);
-                    }
-                    if (r.Content.Headers.ContentType.MediaType != "application/json") {
-                        throw new VaultRequestException($"Unexpected content media type {r.Content.Headers.ContentType.MediaType}", HttpStatusCode.InternalServerError);
-                    }
-                }
+                await ValidateVaultResponse(r).ConfigureAwait(false);
 
                 return await r.Content.ReadAsStringAsync().ConfigureAwait(false);
             }
@@ -120,15 +112,7 @@ namespace Vault
         {
             using (var r = await HttpSendRequest(method, uri, body, vaultToken, TimeSpan.Zero, ct).ConfigureAwait(false))
             {
-                if (r.StatusCode != HttpStatusCode.NotFound) {
-                    if (!r.IsSuccessStatusCode)
-                    {
-                        throw new VaultRequestException($"Unexpected response, status code {r.StatusCode}", r.StatusCode);
-                    }
-                    if (r.Content.Headers.ContentType.MediaType == "application/json") {
-                        throw new VaultRequestException($"Unexpected content media type {r.Content.Headers.ContentType.MediaType}", HttpStatusCode.InternalServerError);
-                    }
-                }
+                await ValidateVaultResponse(r).ConfigureAwait(false);
 
                 return await r.Content.ReadAsByteArrayAsync().ConfigureAwait(false);
             }
@@ -150,6 +134,32 @@ namespace Vault
             {
                 DefaultValueHandling = DefaultValueHandling.Ignore
             };
+        }
+
+        private static async Task ValidateVaultResponse(HttpResponseMessage response)
+        {
+            if (response.StatusCode != HttpStatusCode.NotFound)
+            {
+                if (!response.IsSuccessStatusCode)
+                {
+                    var jsonContent = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+                    var exceptionMessage =
+                        $"Unexpected response, Status Code: {(int) response.StatusCode} {response.StatusCode}, {jsonContent}";
+
+                    throw new VaultRequestException(exceptionMessage, response.StatusCode);
+                }
+
+                if (response.Content.Headers.ContentType.MediaType != "application/json")
+                {
+                    var jsonContent = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+                    var exceptionMessage =
+                        $"Unexpected content media type {response.Content.Headers.ContentType.MediaType}, Status Code: {(int) response.StatusCode} {response.StatusCode}, {jsonContent}";
+
+                    throw new VaultRequestException(exceptionMessage, response.StatusCode);
+                }
+            }
         }
     }
 }
